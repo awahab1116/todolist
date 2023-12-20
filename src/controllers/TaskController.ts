@@ -1,9 +1,10 @@
 import { Task } from "../entity/Task";
 import { User } from "../entity/User";
+import { List } from "../entity/List";
 import { InternalServerError } from "../response/InternalServerErrorResponse";
 import { RequestFailed } from "../response/RequestFailedResponse";
 import { classToPlain } from "class-transformer";
-import { Request, Response } from "express";
+import {  Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
 
 export const createTask = async (req: AuthRequest, res: Response) => {
@@ -26,22 +27,73 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         return RequestFailed(res, 400, "fileAttachments");
       }
 
+      const task = new Task();
+      task.title = title;
+      task.description = description;
+      task.fileAttachments = fileAttachments;
+      task.creationDateTime = creationDateTime;
+      task.completionStatus = completionStatus || false;
+
+      if (completionStatus) {
+          task.completionDateTime = new Date();
+      }
+
       const user = await User.findOne({
-        where: { id: req.userId },
+          where: {
+              id: req.userId
+          }
       });
 
-      if(user){
-        const task = new Task();
-        task.title = title;
-        task.description = description;
-        task.fileAttachments = fileAttachments;
-        task.creationDateTime = creationDateTime;
-        task.completionStatus = completionStatus ? completionStatus : false;
-        task.user = user
+      if (user) {
+          const list = await List.findOne({
+              where: {
+                  user: { id: req.userId }
+              }
+          });
+
+          if (!list) {
+              const newList = new List();
+              newList.user = user;
+              await newList.save();
+
+              task.list = newList;
+              await task.save();
+
+              const taskResponse = classToPlain(task);
+              console.log("user creating task first time")
+              return res.status(200).json({
+                  success: true,
+                  task: taskResponse,
+              });
+          }
+          console.log("user already created the list now creating another task")
+          task.list = list;
+          await task.save();
+
+          const taskResponse = classToPlain(task);
+          return res.status(200).json({
+              success: true,
+              task: taskResponse,
+          });
+        } else {
+        return RequestFailed(res, 404, "user", req.userId);
+      }
+
       
-        if(completionStatus){
-            task.completionDateTime = new Date()
-        }
+    } catch (error) {
+      return InternalServerError(res, error);
+    }
+  };
+
+
+  /*
+        const list = await List.findOne({
+        where: { userId: req.userId },
+      });
+      console.log("here")
+      if(list){
+        console.log("List found is ",list)
+        task.list = list;
 
         await task.save();
   
@@ -50,9 +102,28 @@ export const createTask = async (req: AuthRequest, res: Response) => {
           success: true,
           task: taskResponse,
         });
+    }else{
+      console.log("List created then add task first time user creating task")
+      const user = await User.findOne({
+        where: { id: req.userId },
+      });
+
+      if(user){
+      const list = new List();
+      list.user = user;
+
+      await list.save();
+
+      task.list = list;
+
+      await task.save();
+
+      const taskResponse = classToPlain(task);
+      res.status(200).json({
+        success: true,
+        task: taskResponse,
+      });
+
+      }
     }
-      
-    } catch (error) {
-      return InternalServerError(res, error);
-    }
-  };
+  */

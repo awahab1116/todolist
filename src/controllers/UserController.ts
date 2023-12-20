@@ -14,11 +14,11 @@ import { IsEmailAddress } from "../helper/IsEmailAddress";
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const phonenumber: string = req.body.phonenumber;
+    const email: string = req.body.email;
     const password: string = req.body.password;
 
-    if (!phonenumber || !phonenumber.trim().length) {
-      return RequestFailed(res, 400, "phonenumber");
+    if (!email || !email.trim().length) {
+      return RequestFailed(res, 400, "email");
     }
 
     if (!password || !password.trim().length) {
@@ -28,7 +28,7 @@ export const login = async (req: Request, res: Response) => {
     const user = await getConnection()
       .getRepository(User)
       .createQueryBuilder("user")
-      .where("user.phoneNumber = :phonenumber", { phonenumber })
+      .where("user.email = :email", { email })
       .leftJoinAndSelect("user.role", "role")
       .getOne();
 

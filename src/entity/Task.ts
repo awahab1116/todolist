@@ -8,7 +8,7 @@ import {
    
 } from "typeorm";
 // import { Role } from "./Role";
-import { User } from "./User";
+import { List } from "./List";
 
 
 @Entity()
@@ -16,8 +16,8 @@ export class Task extends BaseEntity {
     @PrimaryGeneratedColumn("uuid")
     id: number;
 
-    @ManyToOne(() => User, (user) => user.id)
-    user: User;
+    @ManyToOne(() => List, (list) => list.tasks)
+    list: List
 
     @Column({ type: "timestamp" })
     creationDateTime: Date;
