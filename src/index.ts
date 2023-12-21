@@ -1,11 +1,12 @@
 import * as dotenv from "dotenv";
+import fileUpload from "express-fileupload";
 import express from "express";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { pagination } from "typeorm-pagination";
-import roleRouter from "./routes/RoleRoutes";
 import usersRouter from "./routes/UserRoutes";
-import taskRouter from "./routes/TaskRoutes"
+import taskRouter from "./routes/TaskRoutes";
+import reportRouter from "./routes/ReportRoutes";
 
 dotenv.config();
 
@@ -15,12 +16,17 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(
+  fileUpload({
+    limits: { fileSize: 50 * 1024 * 1024 },
+  })
+);
 
 app.use(pagination);
 
-app.use("/role", roleRouter);
 app.use("/user", usersRouter);
-app.use("/task", taskRouter)
+app.use("/task", taskRouter);
+app.use("/report", reportRouter);
 app.get("/", (_, res) => {
   res.status(200).json({
     success: true,

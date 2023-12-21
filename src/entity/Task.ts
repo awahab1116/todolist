@@ -1,39 +1,40 @@
-
 import {
-    BaseEntity,
-    Column,
-    Entity,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-   
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  //   OneToMany,
+  PrimaryGeneratedColumn,
 } from "typeorm";
-// import { Role } from "./Role";
-import { List } from "./List";
-
+import { User } from "./User";
+// import { MYFile } from "./MyFile";
 
 @Entity()
 export class Task extends BaseEntity {
-    @PrimaryGeneratedColumn("uuid")
-    id: number;
+  @PrimaryGeneratedColumn("uuid")
+  id: number;
 
-    @ManyToOne(() => List, (list) => list.tasks)
-    list: List
+  @ManyToOne(() => User, (user) => user.id)
+  user: User;
 
-    @Column({ type: "timestamp" })
-    creationDateTime: Date;
+  //   @OneToMany(() => MYFile, (file) => file.task)
+  //   files: MYFile[];
 
-    @Column()
-    title: string;
+  @Column()
+  creationDateTime: Date;
 
-    @Column()
-    description: string;
+  @Column()
+  title: string;
 
-    @Column()
-    fileAttachments: string;
+  @Column()
+  description: string;
 
-    @Column({default: false})
-    completionStatus: Boolean;
+  @Column({ default: false })
+  completionStatus: Boolean;
 
-    @Column({ type: "timestamp", nullable: true })
-    completionDateTime: Date;
+  @Column()
+  dueDateTime: Date;
+
+  @Column({ nullable: true })
+  completionDateTime: Date;
 }

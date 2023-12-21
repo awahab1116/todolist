@@ -1,10 +1,21 @@
 import * as express from "express";
-import {createTask} from "../controllers/TaskController"
+import {
+  createTask,
+  editTask,
+  deleteTask,
+  viewTasks,
+  attachFilesToExistingTask,
+  fileDownload,
+} from "../controllers/TaskController";
 import { Auth } from "./../middlewares/Auth";
 
 let router = express.Router();
 
-router.post("/create", Auth,createTask);
-
+router.post("/create", Auth, createTask);
+router.put(`/edit`, Auth, editTask);
+router.delete(`/delete`, Auth, deleteTask);
+router.get(`/view`, Auth, viewTasks);
+router.post(`/attach-file-to-task`, Auth, attachFilesToExistingTask);
+router.get(`/file`, fileDownload);
 
 export = router;
