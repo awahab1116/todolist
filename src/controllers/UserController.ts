@@ -9,6 +9,8 @@ import { AuthRequest } from "../middlewares/AuthRequestContext";
 import { LoginResponse } from "../response/LoginResponse";
 import jwt from "jsonwebtoken";
 import { IsEmailAddress } from "../helper/IsEmailAddress";
+import { generateOtp } from "../helper/otp";
+import sendEmail from "../helper/nodemailer";
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -57,6 +59,120 @@ export const login = async (req: Request, res: Response) => {
       if (token) {
         res.status(202).json(LoginResponse(token, refreshToken, user));
       }
+    }
+  } catch (error) {
+    return InternalServerError(res, error);
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email;
+
+    const user = await User.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (user) {
+      let otp = generateOtp();
+      console.log("Otp is ", otp);
+
+      const updatedUser = await getConnection()
+        .createQueryBuilder()
+        .update(User)
+        .set(otp)
+        .where("id = :id", { id: user.id })
+        .execute();
+
+      console.log("Updated User is ", updatedUser);
+
+      if (updatedUser?.affected) {
+        let mailDeatils = {
+          to: user.email,
+          subject: "Otp for forgot password",
+          text: `Your otp is ${otp.otp}`,
+        };
+
+        await sendEmail(mailDeatils);
+
+        return res.status(200).send({
+          success: true,
+          message: "Otp send to your email",
+        });
+      } else {
+        return res.status(200).send({
+          success: false,
+          message: "Cannot send otp to user",
+        });
+      }
+    } else {
+      return RequestFailed(res, 400, "user");
+    }
+  } catch (error) {
+    return InternalServerError(res, error);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email;
+    const otp = req.body.otp;
+    const newPassword = req.body.newPassword;
+
+    if (!(otp && newPassword && email)) {
+      return RequestFailed(res, 400, "email,otp or password");
+    }
+
+    const user = await User.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (user) {
+      if (user.otp === otp) {
+        console.log("time ", user.otpExpirationTime, new Date());
+        if (user.otpExpirationTime > new Date()) {
+          const hashPassword = await hash(newPassword, 12);
+
+          const updatedUser = await getConnection()
+            .createQueryBuilder()
+            .update(User)
+            .set({
+              password: hashPassword,
+            })
+            .where("id = :id", { id: user.id })
+            .execute();
+
+          console.log("Updated User is ", updatedUser);
+
+          if (updatedUser?.affected) {
+            return res.status(202).send({
+              success: true,
+              message: "Password updated successfully",
+            });
+          } else {
+            return res.status(202).send({
+              success: false,
+              message: "Password not changed.Try again later",
+            });
+          }
+        } else {
+          return res.status(202).send({
+            success: false,
+            message: "Otp is expired",
+          });
+        }
+      } else {
+        return res.status(202).send({
+          success: false,
+          message: "Otp is invalid",
+        });
+      }
+    } else {
+      return RequestFailed(res, 400, "user");
     }
   } catch (error) {
     return InternalServerError(res, error);

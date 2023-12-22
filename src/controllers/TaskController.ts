@@ -276,31 +276,3 @@ export const fileDownload = async (req: Request, res: Response) => {
     }
   } catch (error) {}
 };
-
-/*
- const user = await User.findOne({
-      where: { id: req.userId },
-    });
-
-    if (user) {
-      const task = new Task();
-      task.title = title;
-      task.description = description;
-      task.fileAttachments = fileAttachments;
-      task.creationDateTime = creationDateTime;
-      task.completionStatus = completionStatus ? completionStatus : false;
-      task.user = user;
-
-      if (completionStatus) {
-        task.completionDateTime = new Date();
-      }
-
-      await task.save();
-
-      const taskResponse = classToPlain(task);
-      res.status(200).json({
-        success: true,
-        task: taskResponse,
-      });
-    }
-*/

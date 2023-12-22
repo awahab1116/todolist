@@ -25,6 +25,11 @@ export class User extends BaseEntity {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ nullable: true })
+  otp: number;
+
+  @Column({ nullable: true })
+  otpExpirationTime: Date;
   // @Column({ nullable: true })
   // fcmToken: string;
 

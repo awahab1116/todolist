@@ -4,6 +4,8 @@ import express from "express";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { pagination } from "typeorm-pagination";
+import cron from "node-cron";
+import myTask from "./helper/cronJob";
 import usersRouter from "./routes/UserRoutes";
 import taskRouter from "./routes/TaskRoutes";
 import reportRouter from "./routes/ReportRoutes";
@@ -30,9 +32,13 @@ app.use("/report", reportRouter);
 app.get("/", (_, res) => {
   res.status(200).json({
     success: true,
-    message:
-      "You are on node-typescript-boilderplate. You should not have further access from here.",
+    message: "TodoList Application",
   });
+});
+
+cron.schedule("*/15 * * * * *", myTask, {
+  scheduled: true,
+  timezone: "Asia/Karachi",
 });
 
 createConnection()
