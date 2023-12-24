@@ -1,18 +1,18 @@
 import { Response } from "express";
+import logger from "../Logger/index";
 
 export const InternalServerError = (res: Response, error: any) => {
-    console.log(error);
-    console.log(error.message);
-
-    if (error.code === "ER_DUP_ENTRY") {
-        res.status(409).json({
-            success: false,
-            message: error.sqlMessage,
-        });
-    } else {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+  if (error.code === "ER_DUP_ENTRY") {
+    logger.error("Duplicate Entry in Database ", error);
+    res.status(409).json({
+      success: false,
+      message: error.sqlMessage,
+    });
+  } else {
+    logger.error("Server error ", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

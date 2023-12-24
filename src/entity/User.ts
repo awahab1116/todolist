@@ -1,6 +1,13 @@
 import { Exclude } from "class-transformer";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
+export interface UserEntity {
+  id: number;
+  username: string;
+  email: string;
+  // ... other properties
+}
+
 @Entity()
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")

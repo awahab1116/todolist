@@ -20,17 +20,25 @@ export const taskSummary = async (req: AuthRequest, res: Response) => {
     const completedTasks = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
-      .where("task.completionStatus = :completionStatus", {
-        completionStatus: true,
-      })
+      .where(
+        "task.userId = :userId AND task.completionStatus = :completionStatus",
+        {
+          completionStatus: true,
+          userId,
+        }
+      )
       .getCount();
 
     const remainingTasks = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
-      .where("task.completionStatus = :completionStatus", {
-        completionStatus: false,
-      })
+      .where(
+        "task.userId = :userId AND task.completionStatus = :completionStatus",
+        {
+          completionStatus: false,
+          userId,
+        }
+      )
       .getCount();
 
     res.status(202).send({
@@ -66,9 +74,13 @@ export const userComplatedTasksAvg = async (
       const completedTasks = await getConnection()
         .getRepository(Task)
         .createQueryBuilder("task")
-        .where("task.completionStatus = :completionStatus", {
-          completionStatus: true,
-        })
+        .where(
+          "task.userId = :userId AND task.completionStatus = :completionStatus",
+          {
+            completionStatus: true,
+            userId,
+          }
+        )
         .getCount();
 
       const avgTasksCompleted = completedTasks
@@ -88,15 +100,16 @@ export const userComplatedTasksAvg = async (
 };
 
 export const countUncompletedTasksOnTime = async (
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
+    const userId = req.userId;
     let record = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
-      //   .where("task.completionDateTime > task.dueDateTime")
-      .where("DATE(task.completionDateTime) > DATE(task.dueDateTime)")
+      .where("task.userId = :userId", { userId })
+      .andWhere("DATE(task.completionDateTime) > DATE(task.dueDateTime)")
       .getCount();
 
     console.log("DueDate Time is ", record);
@@ -111,13 +124,17 @@ export const countUncompletedTasksOnTime = async (
 };
 
 export const maxTasksCompletedDayCount = async (
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
+    const userId = req.userId;
     const result = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
+      .where("task.userId = :userId", {
+        userId,
+      })
       .select("MAX(task.completionDateTime)", "maximumCompletedTasksDate")
       .getRawOne();
 
@@ -131,21 +148,36 @@ export const maxTasksCompletedDayCount = async (
 };
 
 export const countTasksEachDayWeek = async (
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
+    const userId = req.userId;
     const results = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
       .select("DATE(task.creationDateTime) as creationDate")
       .addSelect("COUNT(task.id) as taskCount")
+      .where("task.userId = :userId", { userId })
       .groupBy("creationDate")
+      .getRawMany();
+
+    const taskData = await getConnection()
+      .getRepository(Task)
+      .createQueryBuilder("task")
+      .select([
+        "DAYNAME(task.creationDateTime) AS dayOfWeek",
+        "DATE(task.creationDateTime) AS creationDate",
+        "COUNT(*) AS openedTasks",
+      ])
+      .where("task.userId = :userId", { userId })
+      .groupBy("dayOfWeek,creationDate")
       .getRawMany();
 
     return res.status(202).send({
       success: true,
       results,
+      taskData,
     });
   } catch (error) {
     return InternalServerError(res, error);

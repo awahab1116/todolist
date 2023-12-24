@@ -4,11 +4,18 @@ import express from "express";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { pagination } from "typeorm-pagination";
-import cron from "node-cron";
-import myTask from "./helper/cronJob";
+// import cron from "node-cron";
+// import sendEmailToUsersTasksDueTodayJob from "./helper/cronJob";
 import usersRouter from "./routes/UserRoutes";
 import taskRouter from "./routes/TaskRoutes";
 import reportRouter from "./routes/ReportRoutes";
+import logger from "./Logger";
+import swaggerUI from "swagger-ui-express";
+import YAML from "yamljs";
+const swaggerJSDocs = YAML.load("./src/swaggerYaml/api.yaml");
+// import passport from "passport";
+// import strategy from "passport-facebook";
+// const FaceBookStrategy = strategy.Strategy;
 
 dotenv.config();
 
@@ -18,6 +25,7 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJSDocs));
 app.use(
   fileUpload({
     limits: { fileSize: 50 * 1024 * 1024 },
@@ -36,15 +44,18 @@ app.get("/", (_, res) => {
   });
 });
 
-cron.schedule("*/15 * * * * *", myTask, {
-  scheduled: true,
-  timezone: "Asia/Karachi",
-});
+// cron.schedule("*/15 * * * * *", sendEmailToUsersTasksDueTodayJob, {
+//   scheduled: true,
+//   timezone: "Asia/Karachi",
+// });
 
 createConnection()
   .then(async () => {
     app.listen(PORT, () => {
       console.log(`CONNECTED TO DB AND SERVER STARTED ON PORT  ${PORT}`);
+      logger!.info(`CONNECTED TO DB AND SERVER STARTED ON PORT  ${PORT}`, {
+        sessionId: "asdas",
+      });
     });
   })
-  .catch((error) => console.log(error));
+  .catch((error) => logger!.error("Cannot connect", error));

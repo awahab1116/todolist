@@ -11,13 +11,14 @@ import jwt from "jsonwebtoken";
 import { IsEmailAddress } from "../helper/IsEmailAddress";
 import { generateOtp } from "../helper/otp";
 import sendEmail from "../helper/nodemailer";
+// import { userLogger } from "../Logger/devLogger";
 
 export const login = async (req: Request, res: Response) => {
   try {
     const email: string = req.body.email;
     const password: string = req.body.password;
 
-    if (!email || !email.trim().length) {
+    if (!IsEmailAddress(email) || !email.trim().length) {
       return RequestFailed(res, 400, "email");
     }
 
@@ -57,7 +58,7 @@ export const login = async (req: Request, res: Response) => {
         }
       );
       if (token) {
-        res.status(202).json(LoginResponse(token, refreshToken, user));
+        res.status(200).json(LoginResponse(token, refreshToken, user));
       }
     }
   } catch (error) {
@@ -68,6 +69,10 @@ export const login = async (req: Request, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const email = req.body.email;
+
+    if (!IsEmailAddress(email) || !email.trim().length) {
+      return RequestFailed(res, 400, "email");
+    }
 
     const user = await User.findOne({
       where: {
@@ -102,7 +107,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
           message: "Otp send to your email",
         });
       } else {
-        return res.status(200).send({
+        return res.status(404).send({
           success: false,
           message: "Cannot send otp to user",
         });
@@ -225,6 +230,8 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
+    //logger.info("in get user");
+    console.log("in get user");
     const user = await User.findOne(req.userId);
 
     if (!user) {

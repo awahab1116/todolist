@@ -1,8 +1,9 @@
 import { getConnection } from "typeorm";
 import { Task } from "../entity/Task";
 import sendEmail from "./nodemailer";
+import logger from "../Logger/index";
 
-const myTask = async () => {
+const sendEmailToUsersTasksDueTodayJob = async () => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -32,11 +33,11 @@ const myTask = async () => {
       text: "You have some task due today",
     });
   } catch (error) {
-    console.log("Error handling is ", error);
+    logger.error("Error:send email to user due tasks today ", error);
   }
 };
 
-export default myTask;
+export default sendEmailToUsersTasksDueTodayJob;
 
 /*
 ER_WRONG_FIELD_WITH_GROUP: Expression #1 of SELECT list is not in GROUP BY clause and contains nonaggregated

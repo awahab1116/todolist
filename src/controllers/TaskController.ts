@@ -7,6 +7,7 @@ import { classToPlain } from "class-transformer";
 import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
 import { getConnection } from "typeorm";
+import archiver from "archiver";
 
 interface FileData {
   name: string;
@@ -76,10 +77,12 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         await Promise.all(filePromises);
       }
 
-      return res.status(202).json({
+      return res.status(200).json({
         success: true,
         task: taskResponse,
       });
+    } else {
+      return RequestFailed(res, 400, "User Id invalid,user");
     }
   } catch (error) {
     return InternalServerError(res, error);
@@ -98,6 +101,9 @@ export const editTask = async (req: AuthRequest, res: Response) => {
     const task = await Task.findOne({
       where: {
         id: taskId,
+        user: {
+          id: req.userId,
+        },
       },
     });
 
@@ -118,18 +124,21 @@ export const editTask = async (req: AuthRequest, res: Response) => {
       console.log("Updated Task is ", updatedTask);
 
       if (updatedTask?.affected) {
-        return res.status(200).send({
+        return res.status(202).send({
           success: true,
           message: "Task updated successfully",
         });
       } else {
-        return res.status(200).send({
+        return res.status(202).send({
           success: false,
           message: "Cannot update task",
         });
       }
     } else {
-      return RequestFailed(res, 400, "task");
+      return res.status(202).send({
+        success: false,
+        message: "Cannot update task",
+      });
     }
   } catch (error) {
     return InternalServerError(res, error);
@@ -139,14 +148,27 @@ export const editTask = async (req: AuthRequest, res: Response) => {
 export const deleteTask = async (req: AuthRequest, res: Response) => {
   try {
     const taskId = req.query.taskId;
+
+    const isTaskFilesDeleted = await getConnection()
+      .createQueryBuilder()
+      .delete()
+      .from(MYFile)
+      .where("taskId = :taskId", {
+        taskId,
+      })
+      .execute();
+
     const isTaskDeleted = await getConnection()
       .createQueryBuilder()
       .delete()
       .from(Task)
-      .where("id = :id", { id: taskId })
+      .where("id = :id AND userId = :userId", {
+        id: taskId,
+        userId: req.userId,
+      })
       .execute();
 
-    console.log("task deleted ", isTaskDeleted);
+    console.log("task deleted ", isTaskDeleted, isTaskFilesDeleted);
 
     if (isTaskDeleted?.affected) {
       return res.status(200).send({
@@ -154,7 +176,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
         message: "Task successfully deleted",
       });
     } else {
-      return res.status(200).send({
+      return res.status(404).send({
         success: false,
         message: "Cannot delete task",
       });
@@ -180,6 +202,9 @@ export const viewTasks = async (req: AuthRequest, res: Response) => {
       .getRepository(Task)
       .createQueryBuilder("task")
       .leftJoinAndSelect(MYFile, "file", "file.taskId = task.id")
+      .where("userId = :userId", {
+        userId: req.userId,
+      })
       .getMany();
 
     // const tasks = await getConnection()
@@ -205,7 +230,7 @@ export const viewTasks = async (req: AuthRequest, res: Response) => {
 };
 
 export const attachFilesToExistingTask = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -225,6 +250,9 @@ export const attachFilesToExistingTask = async (
     const task = await Task.findOne({
       where: {
         id: taskId,
+        user: {
+          id: req.userId,
+        },
       },
     });
 
@@ -244,7 +272,7 @@ export const attachFilesToExistingTask = async (
         await repo.save(newFile);
         //console.log("result file ", result_File);
 
-        return res.status(202).send({
+        return res.status(200).send({
           success: true,
           message: "Files attached to a existing task",
         });
@@ -252,7 +280,10 @@ export const attachFilesToExistingTask = async (
 
       await Promise.all(filePromises);
     } else {
-      RequestFailed(res, 404, "task");
+      return res.status(400).send({
+        success: false,
+        message: "Cannot attach files to this task",
+      });
     }
   } catch (error) {
     return InternalServerError(res, error);
@@ -261,18 +292,52 @@ export const attachFilesToExistingTask = async (
 
 export const fileDownload = async (req: Request, res: Response) => {
   try {
-    const repo = getConnection().getRepository(MYFile);
-    const result_find = await repo.findOne(req.params.id);
-    console.log(result_find);
-    if (result_find) {
-      var fileData = Buffer.from(result_find.data, "base64");
-      res.writeHead(200, {
-        "Content-Type": result_find.mimeType,
-        "Content-Disposition": "attachment; filename=" + result_find.name,
-        "Content-Length": fileData.length,
-      });
-      res.write(fileData);
-      res.end();
+    const taskId = req.query.taskId as string;
+
+    if (!taskId) {
+      return res.status(400).send("Task ID is required in query parameters");
     }
-  } catch (error) {}
+
+    const files = await getConnection()
+      .getRepository(MYFile)
+      .createQueryBuilder("MYFile")
+      .where("taskId = :taskId", {
+        taskId,
+      })
+      .getMany();
+
+    console.log("Files are ", files);
+    if (files.length === 0) {
+      return res.status(404).send("No files found for the specified Task ID");
+    }
+
+    const archive = archiver("zip");
+
+    // Set the response headers for a zip file
+    res.writeHead(200, {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename=files_${taskId}.zip`,
+    });
+
+    // Pipe the zip file to the response
+    archive.pipe(res);
+
+    // Add each file to the zip archive
+    files.forEach((file) => {
+      archive.append(Buffer.from(file.data, "base64"), { name: file.name });
+    });
+
+    // Finalize the zip file
+    archive.finalize();
+
+    // Wait for the 'finish' event before ending the response
+    archive.on("finish", () => {
+      res.end();
+    });
+  } catch (error) {
+    console.error("Error downloading files:", error);
+    res.status(500).send("Internal Server Error");
+    // Ensure to end the response in case of an error
+    res.end();
+  }
 };

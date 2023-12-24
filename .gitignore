@@ -1,3 +1,6 @@
 dist
+env
 node_modules
 ormconfig.json
+combined.log
+error.log

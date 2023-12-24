@@ -1,0 +1,448 @@
+openapi: "3.0.0"
+info:
+  title: TodoList API
+  description: This is my TodoList Api Documentation
+  version: 1.0
+  contact:
+    email: abdulwahab@emumba.com
+  license:
+    name: Hello
+    url: "http://www.google.com"
+servers:
+  - url: http://localhost:5000
+    description: This is my local Server
+  - url: http://example.com/
+    description: This is my original URL
+security:
+  - Bearer: []
+
+paths:
+  /user:
+    get:
+      summary: Get user
+      description: It is returning a user
+      security:
+        - Bearer: []
+      tags:
+        - User
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /user/create:
+    post:
+      summary: Create user (Signup)
+      description: Endpoint for user signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+      tags:
+        - User
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /user/login:
+    post:
+      summary: User login
+      description: Endpoint for user login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      tags:
+        - User
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /user/forgot-password:
+    post:
+      summary: User forgot password
+      description: Endpoint for forgot password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+      tags:
+        - User
+      responses:
+        "200":
+          $ref: "#/components/responses/SimpleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /user/reset-password:
+    post:
+      summary: User reset password
+      description: Endpoint for reset password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPassword"
+      tags:
+        - User
+      responses:
+        "200":
+          $ref: "#/components/responses/SimpleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /task/create:
+    post:
+      summary: Create Task
+      description: Endpoint to create a task with optional file attachments
+      security:
+        - Bearer: []
+      tags:
+        - Task
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CreateTask"
+      tags:
+        - Task
+      responses:
+        "200":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/TaskResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /task/delete:
+    delete:
+      summary: Delete Task
+      description: Endpoint to delete a task by ID
+      security:
+        - Bearer: []
+      tags:
+        - Task
+      parameters:
+        - in: query
+          name: taskId
+          required: true
+          schema:
+            type: string
+          description: The ID of the task to be deleted
+      responses:
+        "200":
+          description: Task successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/SimpleResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /task/view:
+    get:
+      summary: View Tasks
+      description: Endpoint to retrieve tasks for the authenticated user
+      security:
+        - Bearer: []
+      tags:
+        - Task      
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/TaskResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /tasks/attach-file-to-task:
+    post:
+      summary: Attach Files to Existing Task
+      description: Endpoint to attach files to an existing task
+      security:
+        - Bearer: []
+      tags:
+        - Task      
+      parameters:
+        - in: query
+          name: taskId
+          required: true
+          schema:
+            type: string
+          description: The ID of the task to attach files to
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                fileAttachments:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Files attached to an existing task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/SimpleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+components:
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        profileImage:
+          type: string
+        isActive:
+          type: boolean
+        otp:
+          type: integer
+        otpExpirationTime:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    Task:
+        type: object
+        properties:
+          id:
+            type: string
+          title:
+            type: string
+          description:
+            type: string
+          completionStatus:
+            type: boolean
+          dueDateTime:
+            type: string
+            format: date-time
+          creationDateTime:
+            type: string
+            format: date-time
+          completionDateTime:
+            type: string
+            format: date-time
+    CreateUser:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+    CreateTask:
+      type: object
+      required:
+        - title
+        - description
+        - dueDateTime
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dueDateTime:
+          type: string
+          format: date-time
+        completionStatus:
+          type: boolean
+        fileAttachments:
+          type: array
+          items:
+            type: string
+            format: binary
+      UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    ResetPassword:
+      type: object
+      required:
+        - email
+        - otp
+        - newPassword
+      properties:
+        email:
+          type: string
+        otp:
+          type: number
+        password:
+          type: string
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+  responses:
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/User"
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+        refreshToken:
+          type: string
+    TaskResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        task:
+          $ref: "#/components/schemas/Task"
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ServerError:
+      description: Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    SimpleResponse:
+      description: Simple response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
