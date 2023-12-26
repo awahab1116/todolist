@@ -12,9 +12,11 @@ import { IsEmailAddress } from "../helper/IsEmailAddress";
 import { generateOtp } from "../helper/otp";
 import sendEmail from "../helper/nodemailer";
 import { loginType } from "../types/loginType";
+import logger from "../Logger";
 
 export const login = async (req: Request, res: Response) => {
   try {
+    logger!.info(`endpoint /user/login `, { requestBody: req.body });
     const email: string = req.body.email;
     const password: string = req.body.password;
 
@@ -64,6 +66,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
+    logger!.info(`endpoint /user/forgot-password `, { requestBody: req.body });
     const email = req.body.email;
 
     if (!IsEmailAddress(email) || !email.trim().length) {
@@ -126,6 +129,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
+    logger!.info(`endpoint /user/reset-password `, { requestBody: req.body });
     const email = req.body.email;
     const otp = req.body.otp;
     const newPassword = req.body.newPassword;
@@ -190,6 +194,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
+    logger!.info(`endpoint /user/create `, { requestBody: req.body });
     const email: string = req.body.email;
     const firstname: string = req.body.firstName;
     const lastname: string = req.body.lastName;
@@ -235,6 +240,7 @@ export const createUser = async (req: Request, res: Response) => {
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
     //logger.info("in get user");
+    logger!.info(`endpoint /user/ `, { userId: req.userId });
     console.log("in get user");
     const user = await User.findOne(req.userId);
 

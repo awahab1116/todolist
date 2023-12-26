@@ -5,9 +5,13 @@ import { RequestFailed } from "../response/RequestFailedResponse";
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
 import { getConnection } from "typeorm";
+import logger from "../Logger";
 
 export const taskSummary = async (req: AuthRequest, res: Response) => {
   try {
+    logger!.info(`endpoint /report/tasks-summary `, {
+      userId: req.userId,
+    });
     const userId = req.userId;
     console.log("req is ", req.userId);
 
@@ -57,6 +61,9 @@ export const userComplatedTasksAvg = async (
   res: Response
 ) => {
   try {
+    logger!.info(`endpoint /report/user-completed-tasks-avg `, {
+      userId: req.userId,
+    });
     const userId = req.userId;
     const todayDate = new Date();
 
@@ -104,6 +111,9 @@ export const countUncompletedTasksOnTime = async (
   res: Response
 ) => {
   try {
+    logger!.info(`endpoint /report/not-completed-task-on-time `, {
+      userId: req.userId,
+    });
     const userId = req.userId;
     let record = await getConnection()
       .getRepository(Task)
@@ -128,6 +138,9 @@ export const maxTasksCompletedDayCount = async (
   res: Response
 ) => {
   try {
+    logger!.info(`endpoint /report/max-tasks-completed `, {
+      userId: req.userId,
+    });
     const userId = req.userId;
     const result = await getConnection()
       .getRepository(Task)
@@ -152,6 +165,9 @@ export const countTasksEachDayWeek = async (
   res: Response
 ) => {
   try {
+    logger!.info(`endpoint /report/count-task-week `, {
+      userId: req.userId,
+    });
     const userId = req.userId;
     // const results = await getConnection()
     //   .getRepository(Task)

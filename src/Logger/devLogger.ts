@@ -1,5 +1,5 @@
 import { createLogger, transports, format } from "winston";
-const { timestamp, combine, colorize, printf, errors, simple } = format;
+const { timestamp, combine, printf, errors, json } = format;
 
 // const myFormat = printf(({ level, message }) => {
 //   return ` ${level} ${message} `;
@@ -15,12 +15,17 @@ const devLogger = createLogger({
   level: "debug",
   format: combine(
     timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    colorize(),
-    simple(),
+    // colorize(),
+    // simple(),
+    json(),
     errors({ stack: true }),
     customFormat
   ),
-  transports: [new transports.Console()],
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: "errorDev.log", level: "error" }),
+    new transports.File({ filename: "combinedDev.log" }),
+  ],
 });
 
 export default devLogger;

@@ -2,5 +2,7 @@ dist
 .env
 node_modules
 ormconfig.json
-combined.log
-error.log
+combinedProd.log
+combinedDev.log
+errorProd.log
+errorDev.log

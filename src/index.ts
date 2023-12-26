@@ -17,9 +17,6 @@ const swaggerJSDocs = YAML.load("./src/swaggerYaml/api.yaml");
 import passport from "passport";
 import FacebookStrategy from "passport-facebook";
 import session from "express-session";
-// import passport from "passport";
-// import strategy from "passport-facebook";
-// const FaceBookStrategy = strategy.Strategy;
 
 dotenv.config();
 
@@ -40,7 +37,7 @@ passport.use(
       callbackURL: process.env.FACEBOOK_CALLBACK_URL as string,
       profileFields: ["id", "displayName", "emails"],
     },
-    (accessToken, refreshToken, profile, done) => {
+    (_accessToken, _refreshToken, profile, done) => {
       const user = {
         id: profile.id,
         displayName: profile.displayName,
@@ -77,7 +74,7 @@ app.use("/report", reportRouter);
 app.use("/auth", facebookRouter);
 
 // Define routes
-app.get("/facebook/login-page", (req, res) => {
+app.get("/facebook/login-page", (_req, res) => {
   res.send(
     'Hello, please login with Facebook: <a href="/auth/facebook">Login</a>'
   );
@@ -116,9 +113,7 @@ createConnection()
   .then(async () => {
     app.listen(PORT, () => {
       console.log(`CONNECTED TO DB AND SERVER STARTED ON PORT  ${PORT}`);
-      logger!.info(`CONNECTED TO DB AND SERVER STARTED ON PORT  ${PORT}`, {
-        sessionId: "asdas",
-      });
+      logger!.info(`CONNECTED TO DB AND SERVER STARTED ON PORT  ${PORT}`);
     });
   })
   .catch((error) => logger!.error("Cannot connect", error));

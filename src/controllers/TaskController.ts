@@ -4,10 +4,11 @@ import { MYFile } from "../entity/MyFile";
 import { InternalServerError } from "../response/InternalServerErrorResponse";
 import { RequestFailed } from "../response/RequestFailedResponse";
 import { classToPlain } from "class-transformer";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
 import { getConnection } from "typeorm";
 import archiver from "archiver";
+import logger from "../Logger";
 
 interface FileData {
   name: string;
@@ -17,6 +18,10 @@ interface FileData {
 
 export const createTask = async (req: AuthRequest, res: Response) => {
   try {
+    logger!.info(`endpoint /task/create `, {
+      userId: req.userId,
+      requestBody: req.body,
+    });
     console.log("req body ", req.body);
     const title: string = req.body.title;
     const description: string = req.body.description;
@@ -92,6 +97,11 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 
 export const editTask = async (req: AuthRequest, res: Response) => {
   try {
+    logger!.info(`endpoint /task/edit `, {
+      userId: req.userId,
+      taskId: req.query.taskId,
+      requestBody: req.body,
+    });
     console.log("body ", req.body, req.query.taskId, req.userId);
     const taskId = req?.query?.taskId;
 
@@ -153,6 +163,10 @@ export const editTask = async (req: AuthRequest, res: Response) => {
 
 export const deleteTask = async (req: AuthRequest, res: Response) => {
   try {
+    logger!.info(`endpoint /task/delete `, {
+      userId: req.userId,
+      taskId: req.query.taskId,
+    });
     const taskId = req.query.taskId;
 
     const isTaskFilesDeleted = await getConnection()
@@ -194,6 +208,9 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
 
 export const viewTasks = async (req: AuthRequest, res: Response) => {
   try {
+    logger!.info(`endpoint /task/view `, {
+      userId: req.userId,
+    });
     console.log("user ", req.userId);
     // const tasks = await Task.find({
     //   where: {
@@ -240,6 +257,10 @@ export const attachFilesToExistingTask = async (
   res: Response
 ) => {
   try {
+    logger!.info(`endpoint /task/attach-file-to-task `, {
+      userId: req.userId,
+      taskId: req.query.taskId,
+    });
     console.log("Attached Files are ", req?.query?.taskId);
     let fileAttachments = req?.files?.fileAttachments;
     const taskId = req?.query?.taskId;
@@ -296,8 +317,12 @@ export const attachFilesToExistingTask = async (
   }
 };
 
-export const fileDownload = async (req: Request, res: Response) => {
+export const fileDownload = async (req: AuthRequest, res: Response) => {
   try {
+    logger!.info(`endpoint /task/download-file `, {
+      userId: req.userId,
+      taskId: req.query.taskId,
+    });
     const taskId = req.query.taskId as string;
 
     if (!taskId) {
