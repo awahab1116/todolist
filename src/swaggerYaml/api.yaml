@@ -563,7 +563,7 @@ components:
           format: date-time
         completionStatus:
           type: boolean
-      UserLogin:
+    UserLogin:
       type: object
       required:
         - email
@@ -573,7 +573,6 @@ components:
           type: string
         password:
           type: string
-
     ResetPassword:
       type: object
       required:
