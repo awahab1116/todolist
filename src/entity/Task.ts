@@ -11,7 +11,7 @@ import { User } from "./User";
 
 @Entity()
 export class Task extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn()
   id: number;
 
   @ManyToOne(() => User, (user) => user.id)

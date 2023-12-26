@@ -176,6 +176,39 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/ServerError"
+  /task/edit:
+    post:
+      summary: Edit Task
+      description: Endpoint for user to edit the task
+      security:
+        - Bearer: []
+      tags:
+        - Task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditTask"
+      tags:
+        - Task
+      responses:
+        "200":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/SimpleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/ServerError"
   /task/delete:
     delete:
       summary: Delete Task
@@ -262,6 +295,161 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/ServerError"
+  /report/tasks-summary:
+    get:
+      summary: Task Summary
+      description: user can get the summary of tasks
+      security:
+        - Bearer: []
+      tags:
+        - Report
+      responses:
+        "200":
+          description: "Total,completed and remianing tasks"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    success:
+                      type: boolean
+                      example: true
+                    totalTasks:
+                      type: number
+                    completedTasks:
+                      type: number
+                    remainingTasks:
+                      type: number                                        
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /report/not-completed-task-on-time:
+    get:
+      summary: Number of tasks not completed before dueDate
+      description: user can get count of tasks which were not completed on time
+      security:
+        - Bearer: []
+      tags:
+        - Report
+      responses:
+        "200":
+          description: "Number of tasks not completed before dueDate"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    success:
+                      type: boolean
+                      example: true
+                    record:
+                      type: number                                     
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /report/user-completed-tasks-avg:
+    get:
+      summary: Completed tasks average
+      description: average number of tasks completed since creation of user 
+      security:
+        - Bearer: []
+      tags:
+        - Report
+      responses:
+        "200":
+          description: "average number of tasks completed since creation of user"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    success:
+                      type: boolean
+                      example: true
+                    avgTasksCompleted:
+                      type: string                                     
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /report/max-tasks-completed:
+    get:
+      summary: Max tasks completed in a day
+      description: the date on which user completed the maximum number of tasks 
+      security:
+        - Bearer: []
+      tags:
+        - Report
+      responses:
+        "200":
+          description: "the date on which user completed the maximum number of tasks"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    success:
+                      type: boolean
+                      example: true
+                    result:
+                      type : object
+                      properties:
+                        maximumCompletedTasksDate:
+                          type: string
+                          format: date-time                                     
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /report/count-task-week:
+    get:
+      summary: tasks created on every day of week
+      description: number of tasks created on every day of week 
+      security:
+        - Bearer: []
+      tags:
+        - Report
+      responses:
+        "200":
+          description: "number of tasks created on every day of week "
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    success:
+                      type: boolean
+                      example: true
+                    taskData:
+                      type: object
+                      properties: 
+                        dayOfWeek:
+                          type: string
+                        creationDate:
+                          type: string
+                          format: date-time
+                        openedTasks:
+                          type: string
+                          example: "3"
+                        
+                                                
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
 
 components:
   securitySchemes:
@@ -363,6 +551,29 @@ components:
           type: string
         password:
           type: string
+    EditTask:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dueDateTime:
+          type: string
+          format: date-time
+        completionStatus:
+          type: boolean
+      UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
     ResetPassword:
       type: object
       required:

@@ -87,7 +87,7 @@ export const userComplatedTasksAvg = async (
         ? (completedTasks / noDays).toFixed(2)
         : 0;
 
-      return res.status(202).send({
+      return res.status(200).send({
         success: true,
         avgTasksCompleted,
       });
@@ -114,7 +114,7 @@ export const countUncompletedTasksOnTime = async (
 
     console.log("DueDate Time is ", record);
 
-    res.status(202).send({
+    res.status(200).send({
       success: true,
       record,
     });
@@ -138,7 +138,7 @@ export const maxTasksCompletedDayCount = async (
       .select("MAX(task.completionDateTime)", "maximumCompletedTasksDate")
       .getRawOne();
 
-    return res.status(202).send({
+    return res.status(200).send({
       success: true,
       result,
     });
@@ -153,14 +153,14 @@ export const countTasksEachDayWeek = async (
 ) => {
   try {
     const userId = req.userId;
-    const results = await getConnection()
-      .getRepository(Task)
-      .createQueryBuilder("task")
-      .select("DATE(task.creationDateTime) as creationDate")
-      .addSelect("COUNT(task.id) as taskCount")
-      .where("task.userId = :userId", { userId })
-      .groupBy("creationDate")
-      .getRawMany();
+    // const results = await getConnection()
+    //   .getRepository(Task)
+    //   .createQueryBuilder("task")
+    //   .select("DATE(task.creationDateTime) as creationDate")
+    //   .addSelect("COUNT(task.id) as taskCount")
+    //   .where("task.userId = :userId", { userId })
+    //   .groupBy("creationDate")
+    //   .getRawMany();
 
     const taskData = await getConnection()
       .getRepository(Task)
@@ -174,9 +174,9 @@ export const countTasksEachDayWeek = async (
       .groupBy("dayOfWeek,creationDate")
       .getRawMany();
 
-    return res.status(202).send({
+    return res.status(200).send({
       success: true,
-      results,
+      //results,
       taskData,
     });
   } catch (error) {

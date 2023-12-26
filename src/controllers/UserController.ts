@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import { IsEmailAddress } from "../helper/IsEmailAddress";
 import { generateOtp } from "../helper/otp";
 import sendEmail from "../helper/nodemailer";
-// import { userLogger } from "../Logger/devLogger";
+import { loginType } from "../types/loginType";
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -46,17 +46,13 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
       };
-      const token = await jwt.sign(data, process.env.TOKEN_SECRET!, {
+      const token = jwt.sign(data, process.env.TOKEN_SECRET!, {
         expiresIn: "7d",
       });
 
-      const refreshToken = await jwt.sign(
-        data,
-        process.env.REFRESH_TOKEN_SECRET!,
-        {
-          expiresIn: "30d",
-        }
-      );
+      const refreshToken = jwt.sign(data, process.env.REFRESH_TOKEN_SECRET!, {
+        expiresIn: "30d",
+      });
       if (token) {
         res.status(200).json(LoginResponse(token, refreshToken, user));
       }
@@ -81,6 +77,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
     });
 
     if (user) {
+      if (user.loginType !== loginType.simple) {
+        return res.status(400).send({
+          success: false,
+          message:
+            "You can't reset your password,if you registered through facebook",
+        });
+      }
+
       let otp = generateOtp();
       console.log("Otp is ", otp);
 

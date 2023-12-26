@@ -1,28 +1,22 @@
 import { Exclude } from "class-transformer";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-
-export interface UserEntity {
-  id: number;
-  username: string;
-  email: string;
-  // ... other properties
-}
+import { loginType } from "../types/loginType";
 
 @Entity()
 export class User extends BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   firstName: string;
 
-  @Column()
+  @Column({ nullable: true })
   lastName: string;
 
-  @Column({ nullable: true, unique: true })
+  @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
   password: string;
 
@@ -39,6 +33,9 @@ export class User extends BaseEntity {
   otpExpirationTime: Date;
   // @Column({ nullable: true })
   // fcmToken: string;
+
+  @Column({ type: "enum", enum: loginType, default: loginType.simple })
+  loginType: loginType;
 
   @Column()
   updatedAt: Date;

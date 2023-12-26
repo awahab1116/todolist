@@ -20,7 +20,8 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     console.log("req body ", req.body);
     const title: string = req.body.title;
     const description: string = req.body.description;
-    const completionStatus: boolean = !!req.body.completionStatus;
+    const completionStatus: boolean =
+      req.body.completionStatus === "true" ? true : false;
     const dueDateTime = req.body.dueDateTime;
     const creationDateTime = new Date();
     let fileAttachments = req?.files?.fileAttachments;
@@ -97,6 +98,7 @@ export const editTask = async (req: AuthRequest, res: Response) => {
     const title = req.body.title;
     const description = req.body.description;
     const completionStatus = req.body.completionStatus;
+    const dueDateTime = req.body.dueDateTime;
 
     const task = await Task.findOne({
       where: {
@@ -114,9 +116,13 @@ export const editTask = async (req: AuthRequest, res: Response) => {
         .set({
           title: title ? title : task?.title,
           description: description ? description : task?.description,
-          completionStatus: completionStatus
-            ? completionStatus
-            : task?.completionStatus,
+          completionStatus:
+            completionStatus !== undefined
+              ? completionStatus
+              : task?.completionStatus,
+          completionDateTime:
+            completionStatus === false ? undefined : new Date(),
+          dueDateTime: dueDateTime ? dueDateTime : task.dueDateTime,
         })
         .where("id = :id", { id: taskId })
         .execute();
@@ -124,12 +130,12 @@ export const editTask = async (req: AuthRequest, res: Response) => {
       console.log("Updated Task is ", updatedTask);
 
       if (updatedTask?.affected) {
-        return res.status(202).send({
+        return res.status(200).send({
           success: true,
           message: "Task updated successfully",
         });
       } else {
-        return res.status(202).send({
+        return res.status(200).send({
           success: false,
           message: "Cannot update task",
         });
@@ -313,24 +319,19 @@ export const fileDownload = async (req: Request, res: Response) => {
 
     const archive = archiver("zip");
 
-    // Set the response headers for a zip file
     res.writeHead(200, {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename=files_${taskId}.zip`,
     });
 
-    // Pipe the zip file to the response
     archive.pipe(res);
 
-    // Add each file to the zip archive
     files.forEach((file) => {
       archive.append(Buffer.from(file.data, "base64"), { name: file.name });
     });
 
-    // Finalize the zip file
     archive.finalize();
 
-    // Wait for the 'finish' event before ending the response
     archive.on("finish", () => {
       res.end();
     });
