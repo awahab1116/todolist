@@ -1,14 +1,17 @@
 import { Response } from "express";
 import logger from "../Logger/index";
 
+//Function to send response to user if request failed while logging the error in file
 export const RequestFailed = (
   res: Response,
   code: number,
-  error: string,
-  id?: number | string
+  errorMsg: string,
+  endpoint?: string,
+  reqData?: object
 ) => {
+  /*
+ Previous approach but changed it due to logging the errors in file
   let composeMessage = "";
-
   if (code === 400) {
     composeMessage = `${error} cannot be null`;
   } else if (code === 404) {
@@ -20,9 +23,10 @@ export const RequestFailed = (
   } else if (code === 401 || code === 403) {
     composeMessage = error;
   }
-  logger.error(`${composeMessage}`, error);
+  */
+  logger.error(`${endpoint}: ${errorMsg}`, reqData);
   res.status(code).json({
     success: false,
-    message: composeMessage,
+    message: errorMsg,
   });
 };

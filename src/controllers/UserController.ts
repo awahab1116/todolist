@@ -16,42 +16,86 @@ import logger from "../Logger";
 
 export const login = async (req: Request, res: Response) => {
   try {
-    logger!.info(`endpoint /user/login `, { requestBody: req.body });
+    //logging the data to terminal
+    logger!.info(req.originalUrl, req.body);
+
+    //Variables to be used in function
     const email: string = req.body.email;
     const password: string = req.body.password;
 
+    //Is email valid and provided by user
     if (!IsEmailAddress(email) || !email.trim().length) {
-      return RequestFailed(res, 400, "email");
+      return RequestFailed(
+        res,
+        400,
+        `Email cannot be null/Invalid`,
+        req.originalUrl,
+        req.body
+      );
     }
 
+    //is password provided
     if (!password || !password.trim().length) {
-      return RequestFailed(res, 400, "password");
+      return RequestFailed(
+        res,
+        400,
+        `Password cannot be null/Invalid`,
+        req.originalUrl,
+        req.body
+      );
     }
 
+    //To get user from a database
     const user = await getConnection()
       .getRepository(User)
       .createQueryBuilder("user")
       .where("user.email = :email", { email })
       .getOne();
 
+    //if user not found then user provided invalid credentials
     if (!user) {
-      return RequestFailed(res, 401, "Your email / password might be wrong.");
+      return RequestFailed(
+        res,
+        401,
+        `Your email / password might be wrong.`,
+        req.originalUrl,
+        req.body
+      );
     } else {
+      //if in this block user found
+      //now checking if user provided correct password
       const isValidPass = await compare(password, user.password);
+      //if invalid password
       if (!isValidPass) {
-        return RequestFailed(res, 401, "You have entered a wrong password.");
+        return RequestFailed(
+          res,
+          401,
+          `You have entered a wrong password.`,
+          req.originalUrl,
+          req.body
+        );
       }
+      //if user account is not active
       if (!user.isActive) {
-        return RequestFailed(res, 401, "Your account is not active.");
+        return RequestFailed(
+          res,
+          401,
+          `Your account is not active.`,
+          req.originalUrl,
+          req.body
+        );
       }
       const data = {
         id: user.id,
         email: user.email,
       };
+
+      //creating a access token
       const token = jwt.sign(data, process.env.TOKEN_SECRET!, {
         expiresIn: "7d",
       });
 
+      //creating a refresh token rightnow not used in this project
       const refreshToken = jwt.sign(data, process.env.REFRESH_TOKEN_SECRET!, {
         expiresIn: "30d",
       });
@@ -60,17 +104,27 @@ export const login = async (req: Request, res: Response) => {
       }
     }
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
-    logger!.info(`endpoint /user/forgot-password `, { requestBody: req.body });
+    //logging the data to terminal
+    logger!.info(req.originalUrl, req.body);
+
+    //Variables to be used in function
     const email = req.body.email;
 
+    //Is email valid and provided by user
     if (!IsEmailAddress(email) || !email.trim().length) {
-      return RequestFailed(res, 400, "email");
+      return RequestFailed(
+        res,
+        400,
+        "Email cannot be null/Invalid",
+        req.originalUrl,
+        req.body
+      );
     }
 
     const user = await User.findOne({
@@ -79,18 +133,23 @@ export const forgotPassword = async (req: Request, res: Response) => {
       },
     });
 
+    //if user found
     if (user) {
+      //check for only those users who used facebook as their signup theu can reset password
       if (user.loginType !== loginType.simple) {
-        return res.status(400).send({
-          success: false,
-          message:
-            "You can't reset your password,if you registered through facebook",
-        });
+        return RequestFailed(
+          res,
+          400,
+          "You can't reset your password,if you registered through facebook",
+          req.originalUrl,
+          req.body
+        );
       }
 
+      //to generate otp
       let otp = generateOtp();
-      console.log("Otp is ", otp);
 
+      //updating the user with otp and expiration time of otp
       const updatedUser = await getConnection()
         .createQueryBuilder()
         .update(User)
@@ -98,8 +157,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         .where("id = :id", { id: user.id })
         .execute();
 
-      console.log("Updated User is ", updatedUser);
-
+      //checking if user updated or not
       if (updatedUser?.affected) {
         let mailDeatils = {
           to: user.email,
@@ -107,6 +165,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
           text: `Your otp is ${otp.otp}`,
         };
 
+        //sending email to user with otp
         await sendEmail(mailDeatils);
 
         return res.status(200).send({
@@ -114,28 +173,66 @@ export const forgotPassword = async (req: Request, res: Response) => {
           message: "Otp send to your email",
         });
       } else {
-        return res.status(404).send({
-          success: false,
-          message: "Cannot send otp to user",
-        });
+        return RequestFailed(
+          res,
+          404,
+          "Cannot send otp to user",
+          req.originalUrl,
+          req.body
+        );
       }
     } else {
-      return RequestFailed(res, 400, "user");
+      return RequestFailed(
+        res,
+        404,
+        "User email not found.",
+        req.originalUrl,
+        req.body
+      );
     }
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    logger!.info(`endpoint /user/reset-password `, { requestBody: req.body });
+    logger!.info(req.originalUrl, req.body);
     const email = req.body.email;
     const otp = req.body.otp;
     const newPassword = req.body.newPassword;
 
-    if (!(otp && newPassword && email)) {
-      return RequestFailed(res, 400, "email,otp or password");
+    //checking if all 3 required parameters are provided
+    if ((!otp && otp !== 0) || !newPassword || !email) {
+      return RequestFailed(
+        res,
+        400,
+        "email,otp or password not provided",
+        req.originalUrl,
+        req.body
+      );
+    }
+
+    //is email valid
+    if (!IsEmailAddress(email) || !email.trim().length) {
+      return RequestFailed(
+        res,
+        400,
+        "Email cannot be Invalid",
+        req.originalUrl,
+        req.body
+      );
+    }
+
+    //password should be greater than 6 characters
+    if (newPassword.length <= 6) {
+      return RequestFailed(
+        res,
+        400,
+        "Password length should be greater than 6",
+        req.originalUrl,
+        req.body
+      );
     }
 
     const user = await User.findOne({
@@ -145,8 +242,9 @@ export const resetPassword = async (req: Request, res: Response) => {
     });
 
     if (user) {
+      //check if user provided correct otp
       if (user.otp === otp) {
-        console.log("time ", user.otpExpirationTime, new Date());
+        //check if otp is expired or not
         if (user.otpExpirationTime > new Date()) {
           const hashPassword = await hash(newPassword, 12);
 
@@ -159,60 +257,89 @@ export const resetPassword = async (req: Request, res: Response) => {
             .where("id = :id", { id: user.id })
             .execute();
 
-          console.log("Updated User is ", updatedUser);
-
           if (updatedUser?.affected) {
-            return res.status(202).send({
+            return res.status(200).send({
               success: true,
               message: "Password updated successfully",
             });
           } else {
-            return res.status(202).send({
-              success: false,
-              message: "Password not changed.Try again later",
-            });
+            return RequestFailed(
+              res,
+              200,
+              "Password not changed.Try again later",
+              req.originalUrl,
+              req.body
+            );
           }
         } else {
-          return res.status(202).send({
-            success: false,
-            message: "Otp is expired",
-          });
+          return RequestFailed(
+            res,
+            400,
+            "Otp is expired",
+            req.originalUrl,
+            req.body
+          );
         }
       } else {
-        return res.status(202).send({
-          success: false,
-          message: "Otp is invalid",
-        });
+        return RequestFailed(
+          res,
+          400,
+          "Otp is invalid",
+          req.originalUrl,
+          req.body
+        );
       }
     } else {
-      return RequestFailed(res, 400, "user");
+      return RequestFailed(
+        res,
+        400,
+        "User not found",
+        req.originalUrl,
+        req.body
+      );
     }
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    logger!.info(`endpoint /user/create `, { requestBody: req.body });
+    logger!.info(req.originalUrl, req.body);
     const email: string = req.body.email;
-    const firstname: string = req.body.firstName;
-    const lastname: string = req.body.lastName;
+    const firstname: string = req.body.firstName || "";
+    const lastname: string = req.body.lastName || "";
     const password: string = req.body.password;
     const profileImage: string = req.body.profileImage || "";
 
-    if (!firstname || !firstname.trim().length) {
-      return RequestFailed(res, 400, "firstname");
-    }
-    if (!lastname || !lastname.trim().length) {
-      return RequestFailed(res, 400, "lastname");
-    }
     if (!password || !password.trim().length) {
-      return RequestFailed(res, 400, "password");
+      return RequestFailed(
+        res,
+        400,
+        "Password cannot be null/Invalid",
+        req.originalUrl,
+        req.body
+      );
     }
 
     if (!IsEmailAddress(email) || !email.trim().length) {
-      return RequestFailed(res, 400, "email");
+      return RequestFailed(
+        res,
+        400,
+        "Email cannot be null/Invalid",
+        req.originalUrl,
+        req.body
+      );
+    }
+
+    if (password.length <= 6) {
+      return RequestFailed(
+        res,
+        400,
+        "Password length should be greater than 6",
+        req.originalUrl,
+        req.body
+      );
     }
 
     const hashPassword = await hash(password, 12);
@@ -233,27 +360,27 @@ export const createUser = async (req: Request, res: Response) => {
       user: userResponse,
     });
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
-    //logger.info("in get user");
-    logger!.info(`endpoint /user/ `, { userId: req.userId });
-    console.log("in get user");
+    logger!.info(req.originalUrl, { userId: req.userId });
     const user = await User.findOne(req.userId);
 
     if (!user) {
-      return RequestFailed(res, 404, "user", req.userId);
+      return RequestFailed(res, 404, "User not found", req.originalUrl, {
+        userId: req.userId,
+      });
     }
 
     const plainUser = classToPlain(user);
-    res.status(200).json({
+    return res.status(200).send({
       success: true,
       user: plainUser,
     });
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };

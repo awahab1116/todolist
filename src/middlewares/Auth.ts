@@ -11,18 +11,24 @@ interface JWT_DECODE {
   exp: number;
 }
 
+//Middleware for requests which require token,it checks if provided or not and also verifys it
 export const Auth = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    console.log("req.headers ", req.headers);
     const token = req.headers["authorization"]?.split(" ")[1];
     if (!token) {
-      return RequestFailed(res, 404, "Unauthorized / no token found");
+      return RequestFailed(
+        res,
+        401,
+        "Unauthorized / no token found",
+        req.originalUrl,
+        {}
+      );
     } else {
       const data = jwt.verify(token, process.env.TOKEN_SECRET!) as JWT_DECODE;
       req.userId = data.id;
       next();
     }
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };

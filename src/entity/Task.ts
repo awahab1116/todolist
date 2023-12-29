@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { User } from "./User";
-// import { MYFile } from "./MyFile";
 
 @Entity()
 export class Task extends BaseEntity {
@@ -17,6 +16,8 @@ export class Task extends BaseEntity {
   @ManyToOne(() => User, (user) => user.id)
   user: User;
 
+  //Need to define relation here as well if we need files along with tasks
+  //Rightnow, our relation is one sided one task has many files taskID is in Myfile as foreign key right now
   //   @OneToMany(() => MYFile, (file) => file.task)
   //   files: MYFile[];
 
@@ -26,7 +27,7 @@ export class Task extends BaseEntity {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ nullable: true })
   description: string;
 
   @Column({ default: false })

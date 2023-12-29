@@ -9,18 +9,19 @@ import logger from "../Logger";
 
 export const taskSummary = async (req: AuthRequest, res: Response) => {
   try {
-    logger!.info(`endpoint /report/tasks-summary `, {
+    logger!.info(req.originalUrl, {
       userId: req.userId,
     });
     const userId = req.userId;
-    console.log("req is ", req.userId);
 
+    //to get count of user tasks
     const totalTasks = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
       .where("task.userId = :userId", { userId })
       .getCount();
 
+    //to get count of user completed tasks
     const completedTasks = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
@@ -33,6 +34,7 @@ export const taskSummary = async (req: AuthRequest, res: Response) => {
       )
       .getCount();
 
+    //to get count of user not completed tasks
     const remainingTasks = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
@@ -45,23 +47,23 @@ export const taskSummary = async (req: AuthRequest, res: Response) => {
       )
       .getCount();
 
-    res.status(202).send({
+    return res.status(200).send({
       success: true,
       totalTasks,
       completedTasks,
       remainingTasks,
     });
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
-export const userComplatedTasksAvg = async (
+export const userCompletedTasksAvg = async (
   req: AuthRequest,
   res: Response
 ) => {
   try {
-    logger!.info(`endpoint /report/user-completed-tasks-avg `, {
+    logger!.info(req.originalUrl, {
       userId: req.userId,
     });
     const userId = req.userId;
@@ -74,6 +76,7 @@ export const userComplatedTasksAvg = async (
     });
 
     if (user) {
+      //calculating how many days passed since user created the account
       const timeDifference: number =
         todayDate.getTime() - user.createdAt.getTime();
       const noDays: number = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
@@ -90,6 +93,7 @@ export const userComplatedTasksAvg = async (
         )
         .getCount();
 
+      //Calculting average of completed tasks
       const avgTasksCompleted = completedTasks
         ? (completedTasks / noDays).toFixed(2)
         : 0;
@@ -99,10 +103,12 @@ export const userComplatedTasksAvg = async (
         avgTasksCompleted,
       });
     } else {
-      return RequestFailed(res, 404, "user");
+      return RequestFailed(res, 404, "User not found ", req.originalUrl, {
+        userId: req.userId,
+      });
     }
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
@@ -111,7 +117,7 @@ export const countUncompletedTasksOnTime = async (
   res: Response
 ) => {
   try {
-    logger!.info(`endpoint /report/not-completed-task-on-time `, {
+    logger!.info(req.originalUrl, {
       userId: req.userId,
     });
     const userId = req.userId;
@@ -122,14 +128,12 @@ export const countUncompletedTasksOnTime = async (
       .andWhere("DATE(task.completionDateTime) > DATE(task.dueDateTime)")
       .getCount();
 
-    console.log("DueDate Time is ", record);
-
-    res.status(200).send({
+    return res.status(200).send({
       success: true,
       record,
     });
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
@@ -138,7 +142,7 @@ export const maxTasksCompletedDayCount = async (
   res: Response
 ) => {
   try {
-    logger!.info(`endpoint /report/max-tasks-completed `, {
+    logger!.info(req.originalUrl, {
       userId: req.userId,
     });
     const userId = req.userId;
@@ -156,7 +160,7 @@ export const maxTasksCompletedDayCount = async (
       result,
     });
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };
 
@@ -165,19 +169,12 @@ export const countTasksEachDayWeek = async (
   res: Response
 ) => {
   try {
-    logger!.info(`endpoint /report/count-task-week `, {
+    logger!.info(req.originalUrl, {
       userId: req.userId,
     });
     const userId = req.userId;
-    // const results = await getConnection()
-    //   .getRepository(Task)
-    //   .createQueryBuilder("task")
-    //   .select("DATE(task.creationDateTime) as creationDate")
-    //   .addSelect("COUNT(task.id) as taskCount")
-    //   .where("task.userId = :userId", { userId })
-    //   .groupBy("creationDate")
-    //   .getRawMany();
 
+    //dayName gives us name of day like mon,tues
     const taskData = await getConnection()
       .getRepository(Task)
       .createQueryBuilder("task")
@@ -192,10 +189,9 @@ export const countTasksEachDayWeek = async (
 
     return res.status(200).send({
       success: true,
-      //results,
       taskData,
     });
   } catch (error) {
-    return InternalServerError(res, error);
+    return InternalServerError(res, error, req.originalUrl);
   }
 };

@@ -6,3 +6,5 @@ combinedProd.log
 combinedDev.log
 errorProd.log
 errorDev.log
+Images
+jest.config.js

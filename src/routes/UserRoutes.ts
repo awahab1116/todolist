@@ -8,8 +8,10 @@ import {
 } from "../controllers/UserController";
 import { Auth } from "./../middlewares/Auth";
 
+//Initializing Express router
 let router = express.Router();
 
+//routes for user operations
 router.get(``, Auth, getUserById);
 router.post(`/create`, createUser);
 router.post(`/login`, login);

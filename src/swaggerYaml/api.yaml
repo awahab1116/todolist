@@ -38,6 +38,8 @@ paths:
                     example: true
                   user:
                     $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -107,7 +109,7 @@ paths:
         content:
           application/json:
             schema:
-              type: string
+              type: object
               required:
                 - email
               properties:
@@ -232,6 +234,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/responses/SimpleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -253,6 +257,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/responses/TaskResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /task/similar-tasks:
+    get:
+      summary: Similar Tasks of a User
+      description: Endpoint to retrieve similar tasks of a user
+      security:
+        - Bearer: []
+      tags:
+        - Task      
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/TaskResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -295,6 +322,8 @@ paths:
                 $ref: "#/components/responses/SimpleResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -322,6 +351,8 @@ paths:
               schema:
                 type: string
                 format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -353,6 +384,8 @@ paths:
                       type: number
                     remainingTasks:
                       type: number                                        
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -380,6 +413,8 @@ paths:
                       example: true
                     record:
                       type: number                                     
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -407,6 +442,8 @@ paths:
                       example: true
                     avgTasksCompleted:
                       type: string                                     
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -438,6 +475,8 @@ paths:
                         maximumCompletedTasksDate:
                           type: string
                           format: date-time                                     
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -474,6 +513,8 @@ paths:
                         openedTasks:
                           type: string
                           example: "3"                                                
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -538,8 +579,6 @@ components:
     CreateUser:
       type: object
       required:
-        - firstName
-        - lastName
         - email
         - password
       properties:
@@ -555,7 +594,6 @@ components:
       type: object
       required:
         - title
-        - description
         - dueDateTime
       properties:
         title:
@@ -572,16 +610,6 @@ components:
           items:
             type: string
             format: binary
-      UserLogin:
-      type: object
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-        password:
-          type: string
     EditTask:
       type: object
       properties:
@@ -592,6 +620,7 @@ components:
         dueDateTime:
           type: string
           format: date-time
+          example: "2023-12-29T12:06:38"
         completionStatus:
           type: boolean
     UserLogin:
@@ -615,7 +644,7 @@ components:
           type: string
         otp:
           type: number
-        password:
+        newPassword:
           type: string
     Error:
       type: object

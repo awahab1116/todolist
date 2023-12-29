@@ -8,8 +8,10 @@ import { IsEmailAddress } from "../helper/IsEmailAddress";
 import { loginType } from "../types/loginType";
 import { FacebookRequest } from "../middlewares/AuthRequestContext";
 
+//Initializing Express router
 let router = express.Router();
 
+//Function to create token for facebook login user
 const generateToken = (user: User) => {
   const data = {
     id: user.id,
@@ -28,6 +30,7 @@ const generateToken = (user: User) => {
   };
 };
 
+// Route for initiating Facebook authentication
 router.get("/facebook", passport.authenticate("facebook"));
 
 router.get(
@@ -37,8 +40,8 @@ router.get(
     try {
       let email = req?.user?.email as string;
       let displayName = req?.user?.displayName;
-      console.log("Hello");
 
+      //Checking if email is valid
       if (!IsEmailAddress(email) || !email.trim().length) {
         return RequestFailed(res, 400, "email");
       }
@@ -48,18 +51,17 @@ router.get(
           email,
         },
       });
-      console.log("User is ", user);
+
       if (user) {
-        console.log("old user ");
+        //If in this block means old user which has previously loggedIn using facebook OAuth
         let generatedToken = generateToken(user);
-        console.log("Token is ", generatedToken.token);
         return res.status(200).send({
           token: generatedToken.token,
           refreshToken: generatedToken.refreshToken,
           user,
         });
       } else {
-        console.log("New user");
+        //New user so we first make its account and then provide token for login
         const newUser = new User();
         newUser.email = email;
         newUser.firstName = displayName ? displayName : "";
