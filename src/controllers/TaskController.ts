@@ -10,6 +10,8 @@ import { getConnection } from "typeorm";
 import { IsDateValid } from "../helper/isDateValid";
 import archiver from "archiver";
 import logger from "../Logger";
+import { getCache, setCache, removeCache } from "../helper/redis";
+import { REDIS_VIEW_TASKS_KEY } from "../helper/constants";
 
 interface FileData {
   name: string;
@@ -103,6 +105,8 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         await Promise.all(filePromises);
       }
 
+      removeCache(REDIS_VIEW_TASKS_KEY);
+
       return res.status(200).json({
         success: true,
         task: taskResponse,
@@ -190,6 +194,8 @@ export const editTask = async (req: AuthRequest, res: Response) => {
         .execute();
 
       if (updatedTask?.affected) {
+        removeCache(REDIS_VIEW_TASKS_KEY);
+
         return res.status(200).send({
           success: true,
           message: "Task updated successfully",
@@ -268,6 +274,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
         .execute();
 
       if (isTaskDeleted?.affected) {
+        removeCache(REDIS_VIEW_TASKS_KEY);
         return res.status(200).send({
           success: true,
           message: "Task successfully deleted",
@@ -302,15 +309,22 @@ export const viewTasks = async (req: AuthRequest, res: Response) => {
     };
     logger!.info(req.originalUrl, loggedData);
 
-    //getting data from database of tasks
-    const tasks = await getConnection()
-      .getRepository(Task)
-      .createQueryBuilder("task")
-      .leftJoinAndSelect(MYFile, "file", "file.taskId = task.id")
-      .where("userId = :userId", {
-        userId: req.userId,
-      })
-      .getMany();
+    let tasks;
+    tasks = await getCache(REDIS_VIEW_TASKS_KEY);
+
+    if (!tasks) {
+      //getting data from database of tasks
+      tasks = await getConnection()
+        .getRepository(Task)
+        .createQueryBuilder("task")
+        .leftJoinAndSelect(MYFile, "file", "file.taskId = task.id")
+        .where("userId = :userId", {
+          userId: req.userId,
+        })
+        .getMany();
+
+      setCache(REDIS_VIEW_TASKS_KEY, tasks);
+    }
 
     return res.status(200).send({
       success: true,
