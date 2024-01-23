@@ -4,7 +4,7 @@ import { InternalServerError } from "../response/InternalServerErrorResponse";
 import { RequestFailed } from "../response/RequestFailedResponse";
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
-import { getConnection } from "typeorm";
+import { AppDataSource } from "../dataSource";
 import logger from "../Logger";
 
 export const taskSummary = async (req: AuthRequest, res: Response) => {
@@ -15,15 +15,13 @@ export const taskSummary = async (req: AuthRequest, res: Response) => {
     const userId = req.userId;
 
     //to get count of user tasks
-    const totalTasks = await getConnection()
-      .getRepository(Task)
+    const totalTasks = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .where("task.userId = :userId", { userId })
       .getCount();
 
     //to get count of user completed tasks
-    const completedTasks = await getConnection()
-      .getRepository(Task)
+    const completedTasks = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .where(
         "task.userId = :userId AND task.completionStatus = :completionStatus",
@@ -35,8 +33,7 @@ export const taskSummary = async (req: AuthRequest, res: Response) => {
       .getCount();
 
     //to get count of user not completed tasks
-    const remainingTasks = await getConnection()
-      .getRepository(Task)
+    const remainingTasks = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .where(
         "task.userId = :userId AND task.completionStatus = :completionStatus",
@@ -81,8 +78,7 @@ export const userCompletedTasksAvg = async (
         todayDate.getTime() - user.createdAt.getTime();
       const noDays: number = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
-      const completedTasks = await getConnection()
-        .getRepository(Task)
+      const completedTasks = await AppDataSource.getRepository(Task)
         .createQueryBuilder("task")
         .where(
           "task.userId = :userId AND task.completionStatus = :completionStatus",
@@ -121,8 +117,7 @@ export const countUncompletedTasksOnTime = async (
       userId: req.userId,
     });
     const userId = req.userId;
-    let record = await getConnection()
-      .getRepository(Task)
+    let record = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .where("task.userId = :userId", { userId })
       .andWhere("DATE(task.completionDateTime) > DATE(task.dueDateTime)")
@@ -146,8 +141,7 @@ export const maxTasksCompletedDayCount = async (
       userId: req.userId,
     });
     const userId = req.userId;
-    const result = await getConnection()
-      .getRepository(Task)
+    const result = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .where("task.userId = :userId", {
         userId,
@@ -175,8 +169,7 @@ export const countTasksEachDayWeek = async (
     const userId = req.userId;
 
     //dayName gives us name of day like mon,tues
-    const taskData = await getConnection()
-      .getRepository(Task)
+    const taskData = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .select([
         "DAYNAME(task.creationDateTime) AS dayOfWeek",

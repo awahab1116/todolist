@@ -6,7 +6,7 @@ import { RequestFailed } from "../response/RequestFailedResponse";
 import { classToPlain } from "class-transformer";
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
-import { getConnection } from "typeorm";
+import { AppDataSource } from "../dataSource";
 import { IsDateValid } from "../helper/isDateValid";
 import archiver from "archiver";
 import logger from "../Logger";
@@ -89,7 +89,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         fileAttachments = Array.isArray(fileAttachments)
           ? fileAttachments
           : [fileAttachments];
-        const repo = getConnection().getRepository(MYFile);
+        const repo = AppDataSource.getRepository(MYFile);
 
         //Storing multiple files in a database
         const filePromises = fileAttachments.map(async (file: FileData) => {
@@ -136,14 +136,15 @@ export const editTask = async (req: AuthRequest, res: Response) => {
     };
     logger!.info(req.originalUrl, loggerData);
 
-    const taskId = req?.query?.taskId;
+    let taskStringId = req?.query?.taskId;
+    let taskId = Number(taskStringId);
 
     //if TaskId not provided
     if (!taskId) {
       return RequestFailed(
         res,
         404,
-        "TaskId not provided",
+        "TaskId not provided/Invalid",
         req.originalUrl,
         loggerData
       );
@@ -176,8 +177,7 @@ export const editTask = async (req: AuthRequest, res: Response) => {
 
     if (task) {
       //If taskId valid now updating the task on the basis of parameters provided by user
-      const updatedTask = await getConnection()
-        .createQueryBuilder()
+      const updatedTask = await AppDataSource.createQueryBuilder()
         .update(Task)
         .set({
           title: title ? title : task?.title,
@@ -232,12 +232,13 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
       taskId: req.query.taskId,
     };
     logger!.info(req.originalUrl, loggedData);
-    const taskId = req.query.taskId;
+    let taskStringId = req?.query?.taskId;
+    let taskId = Number(taskStringId);
     if (!taskId) {
       return RequestFailed(
         res,
         404,
-        "TaskId not provided",
+        "TaskId not provided/Invalid",
         req.originalUrl,
         loggedData
       );
@@ -254,8 +255,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
 
     if (task) {
       //if task found firstly we are deleting all its files and then task itself
-      await getConnection()
-        .createQueryBuilder()
+      await AppDataSource.createQueryBuilder()
         .delete()
         .from(MYFile)
         .where("taskId = :taskId", {
@@ -263,8 +263,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
         })
         .execute();
 
-      const isTaskDeleted = await getConnection()
-        .createQueryBuilder()
+      const isTaskDeleted = await AppDataSource.createQueryBuilder()
         .delete()
         .from(Task)
         .where("id = :id AND userId = :userId", {
@@ -314,8 +313,7 @@ export const viewTasks = async (req: AuthRequest, res: Response) => {
 
     if (!tasks) {
       //getting data from database of tasks
-      tasks = await getConnection()
-        .getRepository(Task)
+      tasks = await AppDataSource.getRepository(Task)
         .createQueryBuilder("task")
         .leftJoinAndSelect(MYFile, "file", "file.taskId = task.id")
         .where("userId = :userId", {
@@ -347,7 +345,19 @@ export const attachFilesToExistingTask = async (
     logger!.info(req.originalUrl, loggedData);
 
     let fileAttachments = req?.files?.fileAttachments;
-    const taskId = req?.query?.taskId;
+    let taskStringId = req?.query?.taskId;
+    let taskId = Number(taskStringId);
+
+    //if TaskId not provided
+    if (!taskId) {
+      return RequestFailed(
+        res,
+        404,
+        "TaskId not provided/Invalid",
+        req.originalUrl,
+        loggedData
+      );
+    }
 
     if (!fileAttachments) {
       return RequestFailed(
@@ -372,7 +382,7 @@ export const attachFilesToExistingTask = async (
       fileAttachments = Array.isArray(fileAttachments)
         ? fileAttachments
         : [fileAttachments];
-      const repo = getConnection().getRepository(MYFile);
+      const repo = AppDataSource.getRepository(MYFile);
 
       const filePromises = fileAttachments.map(async (file: FileData) => {
         var newFile = new MYFile();
@@ -411,13 +421,14 @@ export const fileDownload = async (req: AuthRequest, res: Response) => {
       taskId: req.query.taskId,
     };
     logger!.info(req.originalUrl, loggedData);
-    const taskId = req.query.taskId as string;
+    let taskStringId = req?.query?.taskId;
+    let taskId = Number(taskStringId);
 
     if (!taskId) {
       return RequestFailed(
         res,
         400,
-        "Task ID is required in query parameters",
+        "Task ID not provided/Invalid",
         req.originalUrl,
         loggedData
       );
@@ -433,8 +444,7 @@ export const fileDownload = async (req: AuthRequest, res: Response) => {
     });
 
     if (task) {
-      const files = await getConnection()
-        .getRepository(MYFile)
+      const files = await AppDataSource.getRepository(MYFile)
         .createQueryBuilder("MYFile")
         .where("taskId = :taskId", {
           taskId,
@@ -501,8 +511,7 @@ export const similarTasks = async (req: AuthRequest, res: Response) => {
     //i have used a subquery which checks if parent query row title exists in all other
     //tasks of that user.I have used a position function which checks if substring exists
     //in a string or not
-    const tasks = await getConnection()
-      .getRepository(Task)
+    const tasks = await AppDataSource.getRepository(Task)
       .createQueryBuilder("task")
       .where((qb) => {
         const subQuery = qb
@@ -530,7 +539,7 @@ export const similarTasks = async (req: AuthRequest, res: Response) => {
 };
 
 //It only gives exact match of string
-// const tasks = await getConnection()
+// const tasks = await AppDataSource
 //   .getRepository(Task)
 //   .createQueryBuilder("task")
 //   .where((qb) => {
@@ -546,7 +555,7 @@ export const similarTasks = async (req: AuthRequest, res: Response) => {
 //   .getMany();
 
 //Tried using Like but it doesn't work
-// const tasks = await getConnection()
+// const tasks = await AppDataSource
 //   .getRepository(Task)
 //   .createQueryBuilder("task")
 //   .where((qb) => {

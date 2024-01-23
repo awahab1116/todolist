@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { User } from "../entity/User";
 import { InternalServerError } from "../response/InternalServerErrorResponse";
 import { RequestFailed } from "../response/RequestFailedResponse";
-import { getConnection } from "typeorm";
+import { AppDataSource } from "../dataSource";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
 import { LoginResponse } from "../response/LoginResponse";
 import jwt from "jsonwebtoken";
@@ -46,8 +46,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     //To get user from a database
-    const user = await getConnection()
-      .getRepository(User)
+    const user = await AppDataSource.getRepository(User)
       .createQueryBuilder("user")
       .where("user.email = :email", { email })
       .getOne();
@@ -150,8 +149,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
       let otp = generateOtp();
 
       //updating the user with otp and expiration time of otp
-      const updatedUser = await getConnection()
-        .createQueryBuilder()
+      const updatedUser = await AppDataSource.createQueryBuilder()
         .update(User)
         .set(otp)
         .where("id = :id", { id: user.id })
@@ -248,8 +246,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         if (user.otpExpirationTime > new Date()) {
           const hashPassword = await hash(newPassword, 12);
 
-          const updatedUser = await getConnection()
-            .createQueryBuilder()
+          const updatedUser = await AppDataSource.createQueryBuilder()
             .update(User)
             .set({
               password: hashPassword,
@@ -367,7 +364,11 @@ export const createUser = async (req: Request, res: Response) => {
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
     logger!.info(req.originalUrl, { userId: req.userId });
-    const user = await User.findOne(req.userId);
+    const user = await User.findOne({
+      where: {
+        id: req.userId,
+      },
+    });
 
     if (!user) {
       return RequestFailed(res, 404, "User not found", req.originalUrl, {
