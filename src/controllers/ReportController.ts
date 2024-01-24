@@ -4,7 +4,7 @@ import { InternalServerError } from "../response/InternalServerErrorResponse";
 import { RequestFailed } from "../response/RequestFailedResponse";
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
-import { AppDataSource } from "../dataSource";
+import AppDataSource from "../dataSource";
 import logger from "../Logger";
 
 export const taskSummary = async (req: AuthRequest, res: Response) => {

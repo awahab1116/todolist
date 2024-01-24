@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 import fileUpload from "express-fileupload";
 import express from "express";
 import "reflect-metadata";
-import { pagination } from "typeorm-pagination";
 // import cron from "node-cron";
 // import sendEmailToUsersTasksDueTodayJob from "./helper/cronJob";
 import usersRouter from "./routes/UserRoutes";
@@ -80,9 +79,6 @@ app.use(
     limits: { fileSize: 50 * 1024 * 1024 },
   })
 );
-
-// Middleware for handling pagination
-app.use(pagination);
 
 // Define routes
 app.use("/user", usersRouter);

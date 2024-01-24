@@ -1,14 +1,11 @@
 // dbconfig.ts
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "./entity/User";
-import { Task } from "./entity/Task";
-import { MYFile } from "./entity/MyFile";
 import { DB_TYPE } from "./helper/constants";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-export const AppDataSource = new DataSource({
+const AppDataSource = new DataSource({
   type: DB_TYPE,
   host: process.env.NODE_DB_HOST,
   port: process.env.NODE_DB_PORT
@@ -20,10 +17,13 @@ export const AppDataSource = new DataSource({
     process.env.NODE_ENV === "development"
       ? process.env.NODE_DB_DEV
       : process.env.NODE_DB_TEST,
-  synchronize: true,
+  synchronize: false,
+  entities: ["src/entity/**/*.ts"],
+  migrations: ["src/migration/**/*.ts"],
   logging: false,
   ssl: {
     rejectUnauthorized: false,
   },
-  entities: [User, Task, MYFile],
 });
+
+export default AppDataSource;

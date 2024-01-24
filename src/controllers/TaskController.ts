@@ -6,7 +6,7 @@ import { RequestFailed } from "../response/RequestFailedResponse";
 import { classToPlain } from "class-transformer";
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
-import { AppDataSource } from "../dataSource";
+import AppDataSource from "../dataSource";
 import { IsDateValid } from "../helper/isDateValid";
 import archiver from "archiver";
 import logger from "../Logger";

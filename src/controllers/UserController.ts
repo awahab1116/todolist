@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { User } from "../entity/User";
 import { InternalServerError } from "../response/InternalServerErrorResponse";
 import { RequestFailed } from "../response/RequestFailedResponse";
-import { AppDataSource } from "../dataSource";
+import AppDataSource from "../dataSource";
 import { AuthRequest } from "../middlewares/AuthRequestContext";
 import { LoginResponse } from "../response/LoginResponse";
 import jwt from "jsonwebtoken";

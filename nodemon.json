@@ -1,3 +1,5 @@
 {
-    "ext": ".js,.mjs,.json,.yaml"
-}
+    "watch": ["src"],
+    "ext": ".ts,.json,.js,.mjs,.yaml",
+    "exec": "ts-node src/index.ts"
+  }

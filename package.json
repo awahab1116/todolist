@@ -2,7 +2,7 @@
   "name": "todolistbackend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "test": "jest --bail=false",
     "build": "tsc",
@@ -11,9 +11,13 @@
     "build:mkdir": "mkdir dist/uploads && mkdir dist/uploads/images  dist/uploads/pdf  dist/uploads/video",
     "seed": "node  --max-old-space-size=8192 dist/services/seeder.js",
     "watch": "tsc -w",
-    "dev": "nodemon dist/index.js",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "start": "node dist/index.js",
-    "typeorm": "typeorm-ts-node-esm"
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/dataSource.ts",
+    "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d ./src/dataSource.ts",
+    "migration:generate": "npm run typeorm migration:generate -- -d ./src/dataSource.ts",
+    "migration:create": "npm run typeorm migration:create"
   },
   "keywords": [],
   "author": "awahab1116",
@@ -38,7 +42,7 @@
     "swagger-ui-express": "^5.0.0",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
-    "typescript": "^4.3.5"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "@types/archiver": "^6.0.2",
@@ -71,7 +75,6 @@
     "pg": "^8.7.1",
     "redis": "^4.6.12",
     "typeorm": "^0.3.19",
-    "typeorm-pagination": "^2.0.3",
     "uuid": "^8.3.2",
     "winston": "^3.11.0",
     "yamljs": "^0.3.0"

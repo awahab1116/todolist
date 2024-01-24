@@ -42,4 +42,7 @@ export class User extends BaseEntity {
 
   @Column()
   createdAt: Date;
+
+  @Column({ type: "bool" })
+  active: Boolean;
 }
