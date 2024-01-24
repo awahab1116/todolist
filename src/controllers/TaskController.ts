@@ -105,7 +105,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         await Promise.all(filePromises);
       }
 
-      removeCache(REDIS_VIEW_TASKS_KEY);
+      await removeCache(REDIS_VIEW_TASKS_KEY);
 
       return res.status(200).json({
         success: true,
@@ -194,7 +194,7 @@ export const editTask = async (req: AuthRequest, res: Response) => {
         .execute();
 
       if (updatedTask?.affected) {
-        removeCache(REDIS_VIEW_TASKS_KEY);
+        await removeCache(REDIS_VIEW_TASKS_KEY);
 
         return res.status(200).send({
           success: true,
@@ -273,7 +273,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
         .execute();
 
       if (isTaskDeleted?.affected) {
-        removeCache(REDIS_VIEW_TASKS_KEY);
+        await removeCache(REDIS_VIEW_TASKS_KEY);
         return res.status(200).send({
           success: true,
           message: "Task successfully deleted",

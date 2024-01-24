@@ -25,17 +25,17 @@ async function getCache(key: string) {
   }
 }
 
-function setCache(key: string, data: any) {
+async function setCache(key: string, data: any) {
   try {
-    redisClient.set(key, JSON.stringify(data), { EX: 60 * 60 * 24 });
+    await redisClient.set(key, JSON.stringify(data), { EX: 60 * 60 * 24 });
   } catch (err) {
     logger!.info(`Cannot set cached data of key:${key}`);
   }
 }
 
-function removeCache(key: string) {
+async function removeCache(key: string) {
   try {
-    redisClient.del(key);
+    await redisClient.del(key);
   } catch (err) {
     logger!.info(`Cannot remove cached data of key:${key}`);
   }

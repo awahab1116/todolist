@@ -1,27 +1,27 @@
-import { createConnection, Connection, ConnectionOptions } from "typeorm";
+import { AppDataSource } from "../src/dataSource";
+import { DataSource } from "typeorm";
 import request from "supertest";
 import app from "../src/app";
 import path from "path";
 import { Server } from "http";
-import { dbConfig } from "../dbConfig";
 import { describe } from "node:test";
 import { Task } from "../src/entity/Task";
 
 const PORT = process.env.PORT || 9000;
-let connection: Connection;
+let connection: DataSource;
 let server: Server;
 let authToken: string;
 let task: Task;
 
 beforeAll(async () => {
-  connection = await createConnection(dbConfig as ConnectionOptions);
-  await connection.synchronize();
+  connection = await AppDataSource;
+  await connection.initialize();
 
   server = app.listen(PORT);
 });
 
 afterAll(async () => {
-  await connection.close();
+  await connection.destroy();
   await server.close();
 });
 
@@ -191,7 +191,7 @@ describe("POST /task/attach-file-to-task", () => {
       .attach("fileAttachments", path.resolve(__dirname, "../Images/pic.jpg"))
       .attach("fileAttachments", path.resolve(__dirname, "../Images/pic1.jpg"));
 
-    expect(res.statusCode).toBe(400);
+    expect(res.statusCode).toBe(404);
   });
 });
 

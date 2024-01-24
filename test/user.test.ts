@@ -1,26 +1,26 @@
-import { createConnection, Connection, ConnectionOptions } from "typeorm";
+import { AppDataSource } from "../src/dataSource";
+import { DataSource } from "typeorm";
 import request from "supertest";
 import app from "../src/app";
 import { Server } from "http";
-import { dbConfig } from "../dbConfig";
 import { describe } from "node:test";
 
 const PORT = process.env.TEST_PORT || 9000;
-let connection: Connection;
+let connection: DataSource;
 let server: Server;
 let authToken: string;
 
 beforeAll(async () => {
   console.log("before All");
-  connection = await createConnection(dbConfig as ConnectionOptions);
-  await connection.synchronize();
+  connection = await AppDataSource;
+  await connection.initialize();
   //console.log("connection ", connection);
   server = app.listen(PORT);
 });
 
 afterAll(async () => {
   console.log("after All");
-  await connection.close();
+  await connection.destroy();
   await server.close();
 });
 
